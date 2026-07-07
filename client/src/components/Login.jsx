@@ -10,6 +10,7 @@ const Login = ({ onLoginSuccess }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   const API_URL = 'http://localhost:5000/api';
@@ -17,6 +18,7 @@ const Login = ({ onLoginSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     const endpoint = isRegister ? `${API_URL}/auth/register` : `${API_URL}/auth/login`;
@@ -39,10 +41,18 @@ const Login = ({ onLoginSuccess }) => {
         throw new Error(data.message || 'Something went wrong');
       }
 
-      // Success
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onLoginSuccess(data.user, data.token);
+      if (isRegister) {
+        setSuccessMessage('Registration successful! Please sign in to continue.');
+        setIsRegister(false); // Switch to login form
+        setPassword(''); // Clear password input
+        setUsername(''); // Clear username input
+        setPhoneNumber(''); // Clear phone number input
+      } else {
+        // Success Login
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        onLoginSuccess(data.user, data.token);
+      }
     } catch (err) {
       setError(err.message || 'Failed to connect to backend server. Make sure the server is running on port 5000.');
     } finally {
@@ -67,6 +77,25 @@ const Login = ({ onLoginSuccess }) => {
           <div className="auth-error">
             <AlertCircle size={18} style={{ flexShrink: 0 }} />
             <span>{error}</span>
+          </div>
+        )}
+
+        {successMessage && (
+          <div className="auth-success" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+            border: '1px solid var(--primary)',
+            color: 'var(--primary)',
+            padding: '12px',
+            borderRadius: '8px',
+            marginBottom: '20px',
+            fontSize: '14px',
+            fontWeight: 500
+          }}>
+            <ShoppingBag size={18} style={{ flexShrink: 0, color: 'var(--primary)' }} />
+            <span>{successMessage}</span>
           </div>
         )}
 
@@ -174,7 +203,7 @@ const Login = ({ onLoginSuccess }) => {
         <div className="auth-footer">
           <p>
             {isRegister ? 'Already have an account? ' : "Don't have an account? "}
-            <span className="auth-link" onClick={() => { setIsRegister(!isRegister); setError(''); }}>
+            <span className="auth-link" onClick={() => { setIsRegister(!isRegister); setError(''); setSuccessMessage(''); }}>
               {isRegister ? 'Sign In' : 'Register Here'}
             </span>
           </p>
