@@ -1,0 +1,17 @@
+{
+  "name": "chijandas-root",
+  "version": "1.0.0",
+  "description": "Root package for Chijandas Inventory Management Dashboard",
+  "main": "index.js",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix server && npm run client-install",
+    "client-install": "npm install --prefix client || echo 'Client not setup yet'",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "seed": "npm run seed --prefix server"
+  },
+  "dependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
