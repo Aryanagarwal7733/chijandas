@@ -132,6 +132,7 @@ const Login = ({ onLoginSuccess }) => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required 
+                autoComplete="off"
                 style={{ paddingLeft: '44px', width: '100%' }}
               />
             </div>
@@ -148,6 +149,7 @@ const Login = ({ onLoginSuccess }) => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required 
+                autoComplete="new-password"
                 style={{ paddingLeft: '44px', paddingRight: '40px', width: '100%' }}
               />
               <div 
