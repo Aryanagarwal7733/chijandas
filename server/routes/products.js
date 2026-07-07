@@ -192,7 +192,7 @@ router.post('/:id/order', authenticate, async (req, res) => {
     });
 
     // Log transaction as 'order'
-    await dbManager.transactions.create({
+    const transaction = await dbManager.transactions.create({
       productId: req.params.id,
       productName: product.name,
       userName: req.user.username,
@@ -205,6 +205,17 @@ router.post('/:id/order', authenticate, async (req, res) => {
 
     // Save user address for future purchases
     await dbManager.users.findByIdAndUpdate(req.user.id, { savedAddress: shippingAddress.trim() });
+
+    // Send order confirmation email asynchronously
+    const { sendOrderConfirmation } = require('../services/emailService');
+    sendOrderConfirmation(req.user.email, req.user.username, {
+      orderId: transaction._id,
+      productName: product.name,
+      quantity: reqQty,
+      price: product.price,
+      shippingAddress: shippingAddress.trim(),
+      paymentMethod: payMethod
+    }).catch(err => console.error('Failed to send confirmation email:', err));
 
     res.json({ message: 'Order placed successfully', product: updated });
   } catch (err) {
