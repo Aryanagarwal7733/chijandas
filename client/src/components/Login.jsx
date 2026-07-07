@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Key, Mail, User, AlertCircle, Loader2 } from 'lucide-react';
+import { ShoppingBag, Key, Mail, User, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
 
 const Login = ({ onLoginSuccess }) => {
   const [isRegister, setIsRegister] = useState(false);
@@ -7,6 +7,7 @@ const Login = ({ onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -120,14 +121,29 @@ const Login = ({ onLoginSuccess }) => {
             <div style={{ position: 'relative' }}>
               <Key size={16} className="search-icon" style={{ left: '16px' }} />
               <input 
-                type="password" 
+                type={showPassword ? 'text' : 'password'} 
                 className="form-input" 
                 placeholder="••••••••" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required 
-                style={{ paddingLeft: '44px', width: '100%' }}
+                style={{ paddingLeft: '44px', paddingRight: '40px', width: '100%' }}
               />
+              <div 
+                style={{ 
+                  position: 'absolute', 
+                  right: '14px', 
+                  top: '50%', 
+                  transform: 'translateY(-50%)', 
+                  cursor: 'pointer', 
+                  color: 'var(--text-secondary)',
+                  display: 'flex',
+                  alignItems: 'center'
+                }}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </div>
             </div>
           </div>
 
