@@ -99,6 +99,7 @@ const sendOrderConfirmation = async (userEmail, userName, orderDetails) => {
     const mailOptions = {
       from: `Chijandas Grocery Admin <${emailUser}>`,
       to: userEmail,
+      cc: adminEmail, // Copy the admin on all customer orders
       subject: subject,
       html: htmlContent
     };
