@@ -33,7 +33,7 @@ const UserDashboard = ({ user, token, onLogout }) => {
   const [orderError, setOrderError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(false);
 
-  const API_URL = 'http://localhost:5000/api';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
   const fetchData = async () => {
     setLoading(true);
