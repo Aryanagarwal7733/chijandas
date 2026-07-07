@@ -27,6 +27,14 @@ const TransactionSchema = new mongoose.Schema({
     type: Number, // Unit price or total price at transaction time
     required: true
   },
+  shippingAddress: {
+    type: String,
+    default: ''
+  },
+  paymentMethod: {
+    type: String,
+    default: ''
+  },
   timestamp: {
     type: Date,
     default: Date.now

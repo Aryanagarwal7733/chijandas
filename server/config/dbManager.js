@@ -66,6 +66,22 @@ const dbManager = {
         return newUser;
       }
     },
+    findByIdAndUpdate: async (id, updateData) => {
+      if (global.dbType === 'mongodb') {
+        return await User.findByIdAndUpdate(id, updateData, { new: true });
+      } else {
+        const db = readJsonDB();
+        const index = db.users.findIndex(u => u._id === id);
+        if (index === -1) return null;
+        const updatedUser = {
+          ...db.users[index],
+          ...updateData
+        };
+        db.users[index] = updatedUser;
+        writeJsonDB(db);
+        return updatedUser;
+      }
+    },
     find: async (query = {}) => {
       if (global.dbType === 'mongodb') {
         return await User.find(query);

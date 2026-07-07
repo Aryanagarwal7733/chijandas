@@ -492,14 +492,15 @@ const AdminDashboard = ({ user, token, onLogout }) => {
                       <th>Customer Name</th>
                       <th>Product Ordered</th>
                       <th>Quantity</th>
-                      <th>Unit Price</th>
                       <th>Total Price</th>
+                      <th>Shipping Address</th>
+                      <th>Payment Method</th>
                     </tr>
                   </thead>
                   <tbody>
                     {transactions.filter(t => t.type === 'order').length === 0 ? (
                       <tr>
-                        <td colSpan="6" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                        <td colSpan="8" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
                           No customer orders have been placed yet.
                         </td>
                       </tr>
@@ -510,11 +511,21 @@ const AdminDashboard = ({ user, token, onLogout }) => {
                           <tr key={t._id}>
                             <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{date}</td>
                             <td style={{ fontWeight: 600, color: '#ffffff' }}>{t.userName}</td>
-                            <td style={{ fontWeight: 500 }}>{t.productName}</td>
+                            <td style={{ fontWeight: 500 }}>
+                              {t.productName} 
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'block' }}> (at ${t.price.toFixed(2)}/ea)</span>
+                            </td>
                             <td style={{ fontWeight: 600 }}>{t.quantity}</td>
-                            <td>${t.price.toFixed(2)}</td>
                             <td style={{ fontWeight: 600, color: 'var(--primary)' }}>
                               ${(t.quantity * t.price).toFixed(2)}
+                            </td>
+                            <td style={{ fontSize: '13px', whiteSpace: 'normal', wordBreak: 'break-word', maxWidth: '200px' }}>
+                              {t.shippingAddress || 'N/A'}
+                            </td>
+                            <td>
+                              <span className={`badge ${t.paymentMethod === 'UPI' ? 'badge-info' : 'badge-warning'}`}>
+                                {t.paymentMethod || 'N/A'}
+                              </span>
                             </td>
                           </tr>
                         );

@@ -161,8 +161,21 @@ router.delete('/:id', authenticate, authorizeAdmin, async (req, res) => {
 // @access  Private
 router.post('/:id/order', authenticate, async (req, res) => {
   try {
-    const { quantity } = req.body;
+    const { quantity, shippingAddress, paymentMethod } = req.body;
     const reqQty = Number(quantity) || 1;
+
+    if (!shippingAddress || !shippingAddress.trim()) {
+      return res.status(400).json({ message: 'Shipping address is required to place an order.' });
+    }
+
+    if (!paymentMethod || !paymentMethod.trim()) {
+      return res.status(400).json({ message: 'Payment method is required to place an order.' });
+    }
+
+    const payMethod = paymentMethod.trim().toUpperCase();
+    if (payMethod !== 'UPI' && payMethod !== 'COD') {
+      return res.status(400).json({ message: 'Invalid payment method. Only UPI and COD are accepted.' });
+    }
 
     const product = await dbManager.products.findById(req.params.id);
     if (!product) {
@@ -185,8 +198,13 @@ router.post('/:id/order', authenticate, async (req, res) => {
       userName: req.user.username,
       type: 'order',
       quantity: reqQty,
-      price: product.price
+      price: product.price,
+      shippingAddress: shippingAddress.trim(),
+      paymentMethod: payMethod
     });
+
+    // Save user address for future purchases
+    await dbManager.users.findByIdAndUpdate(req.user.id, { savedAddress: shippingAddress.trim() });
 
     res.json({ message: 'Order placed successfully', product: updated });
   } catch (err) {

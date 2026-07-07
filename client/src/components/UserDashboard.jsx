@@ -18,6 +18,17 @@ const UserDashboard = ({ user, token, onLogout }) => {
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [orderQuantity, setOrderQuantity] = useState(1);
+  
+  // Structured Address States
+  const [recipientName, setRecipientName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [streetAddress, setStreetAddress] = useState('');
+  const [city, setCity] = useState('');
+  const [indianState, setIndianState] = useState('Maharashtra');
+  const [pincode, setPincode] = useState('');
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  
+  const [paymentMethod, setPaymentMethod] = useState('COD'); // Default COD
   const [orderSubmitting, setOrderSubmitting] = useState(false);
   const [orderError, setOrderError] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(false);
@@ -56,6 +67,16 @@ const UserDashboard = ({ user, token, onLogout }) => {
   const handleOpenOrderModal = (product) => {
     setSelectedProduct(product);
     setOrderQuantity(1);
+    
+    // Autofill structured address from localStorage, fallback to user.username for name
+    setRecipientName(localStorage.getItem('chijandas_recipient_name') || user.username || '');
+    setPhoneNumber(localStorage.getItem('chijandas_phone_number') || '');
+    setStreetAddress(localStorage.getItem('chijandas_street_address') || '');
+    setCity(localStorage.getItem('chijandas_city') || '');
+    setIndianState(localStorage.getItem('chijandas_indian_state') || 'Maharashtra');
+    setPincode(localStorage.getItem('chijandas_pincode') || '');
+    
+    setPaymentMethod('COD');
     setOrderError('');
     setOrderSuccess(false);
     setIsOrderModalOpen(true);
@@ -66,6 +87,23 @@ const UserDashboard = ({ user, token, onLogout }) => {
     setOrderError('');
     setOrderSubmitting(true);
 
+    // Validate phone number length (10 digits)
+    if (phoneNumber.trim().length !== 10 || isNaN(phoneNumber.trim())) {
+      setOrderError('Please enter a valid 10-digit Indian phone number.');
+      setOrderSubmitting(false);
+      return;
+    }
+
+    // Validate pincode length (6 digits)
+    if (pincode.trim().length !== 6 || isNaN(pincode.trim())) {
+      setOrderError('Please enter a valid 6-digit Pincode.');
+      setOrderSubmitting(false);
+      return;
+    }
+
+    // Format full address for server storage
+    const fullAddress = `${recipientName.trim()} | Ph: ${phoneNumber.trim()} | ${streetAddress.trim()}, ${city.trim()}, ${indianState} - ${pincode.trim()}`;
+
     try {
       const res = await fetch(`${API_URL}/products/${selectedProduct._id}/order`, {
         method: 'POST',
@@ -73,7 +111,11 @@ const UserDashboard = ({ user, token, onLogout }) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ quantity: Number(orderQuantity) })
+        body: JSON.stringify({ 
+          quantity: Number(orderQuantity),
+          shippingAddress: fullAddress,
+          paymentMethod
+        })
       });
 
       const data = await res.json();
@@ -82,6 +124,21 @@ const UserDashboard = ({ user, token, onLogout }) => {
       }
 
       setOrderSuccess(true);
+      
+      // Save structured address fields locally for future autofills
+      localStorage.setItem('chijandas_recipient_name', recipientName.trim());
+      localStorage.setItem('chijandas_phone_number', phoneNumber.trim());
+      localStorage.setItem('chijandas_street_address', streetAddress.trim());
+      localStorage.setItem('chijandas_city', city.trim());
+      localStorage.setItem('chijandas_indian_state', indianState);
+      localStorage.setItem('chijandas_pincode', pincode.trim());
+      localStorage.setItem('chijandas_saved_address', fullAddress);
+      
+      // Update savedAddress in local user profile cache
+      const cachedUser = JSON.parse(localStorage.getItem('user') || '{}');
+      cachedUser.savedAddress = fullAddress;
+      localStorage.setItem('user', JSON.stringify(cachedUser));
+
       setTimeout(() => {
         setIsOrderModalOpen(false);
         fetchData(); // Refresh list and logs
@@ -91,6 +148,55 @@ const UserDashboard = ({ user, token, onLogout }) => {
       setOrderError(err.message || 'Server error placing order');
     } finally {
       setOrderSubmitting(false);
+    }
+  };
+
+  const findIndianStateMatch = (apiState) => {
+    const states = [
+      "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", 
+      "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", 
+      "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", 
+      "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", 
+      "Uttar Pradesh", "Uttarakhand", "West Bengal", "Delhi", "Jammu & Kashmir"
+    ];
+    
+    const cleanApi = apiState.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+    
+    return states.find(s => {
+      const cleanS = s.toLowerCase().replace(/\s+/g, '').replace(/[^a-z0-9]/g, '');
+      return cleanS.includes(cleanApi) || cleanApi.includes(cleanS);
+    }) || null;
+  };
+
+  const handlePincodeChange = async (val) => {
+    const cleanVal = val.replace(/\D/g, '').slice(0, 6);
+    setPincode(cleanVal);
+
+    if (cleanVal.length === 6) {
+      setPincodeLoading(true);
+      try {
+        const response = await fetch(`https://api.postalpincode.in/pincode/${cleanVal}`);
+        const data = await response.json();
+        
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice && data[0].PostOffice[0]) {
+          const postOffice = data[0].PostOffice[0];
+          
+          if (postOffice.District) {
+            setCity(postOffice.District);
+          }
+          
+          if (postOffice.State) {
+            const matchedState = findIndianStateMatch(postOffice.State);
+            if (matchedState) {
+              setIndianState(matchedState);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching postal data by pincode:', err);
+      } finally {
+        setPincodeLoading(false);
+      }
     }
   };
 
@@ -262,15 +368,16 @@ const UserDashboard = ({ user, token, onLogout }) => {
                       <th>Date</th>
                       <th>Product</th>
                       <th>Quantity Purchased</th>
-                      <th>Unit Price</th>
                       <th>Total Paid</th>
+                      <th>Shipping Address</th>
+                      <th>Payment Method</th>
                       <th>Status</th>
                     </tr>
                   </thead>
                   <tbody>
                     {transactions.length === 0 ? (
                       <tr>
-                        <td colSpan="6" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
+                        <td colSpan="7" style={{ textAlign: 'center', padding: '24px', color: 'var(--text-secondary)' }}>
                           You have not placed any orders yet. Try ordering a product above!
                         </td>
                       </tr>
@@ -281,14 +388,21 @@ const UserDashboard = ({ user, token, onLogout }) => {
                           <tr key={t._id}>
                             <td style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>{date}</td>
                             <td style={{ fontWeight: 600, color: '#ffffff' }}>{t.productName}</td>
-                            <td>{t.quantity}</td>
-                            <td>${t.price.toFixed(2)}</td>
+                            <td>{t.quantity} items (at ${t.price.toFixed(2)}/ea)</td>
                             <td style={{ fontWeight: 600, color: 'var(--primary)' }}>
                               ${(t.quantity * t.price).toFixed(2)}
                             </td>
+                            <td style={{ fontSize: '13px', maxStrokeWidth: '150px', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                              {t.shippingAddress || 'N/A'}
+                            </td>
+                            <td>
+                              <span className={`badge ${t.paymentMethod === 'UPI' ? 'badge-info' : 'badge-warning'}`}>
+                                {t.paymentMethod || 'N/A'}
+                              </span>
+                            </td>
                             <td>
                               <span className="badge badge-success" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                                <Check size={10} /> Delivered
+                                <Check size={10} /> Confirmed
                               </span>
                             </td>
                           </tr>
@@ -354,10 +468,10 @@ const UserDashboard = ({ user, token, onLogout }) => {
                     <div className="form-group">
                       <label className="form-label">Purchase Quantity</label>
                       <input 
-                        type="number"
+                        type="number" 
                         min="1"
                         max={selectedProduct.quantity}
-                        className="form-input"
+                        className="form-input" 
                         value={orderQuantity}
                         onChange={(e) => setOrderQuantity(Math.max(1, Math.min(selectedProduct.quantity, Number(e.target.value))))}
                         required
@@ -365,6 +479,130 @@ const UserDashboard = ({ user, token, onLogout }) => {
                       <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                         Maximum available: {selectedProduct.quantity} units
                       </span>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Recipient Name</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. Aryan Agarwal" 
+                        value={recipientName}
+                        onChange={(e) => setRecipientName(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Phone Number (10 Digits)</label>
+                      <input 
+                        type="tel" 
+                        pattern="[0-9]{10}"
+                        maxLength="10"
+                        className="form-input" 
+                        placeholder="e.g. 9876543210" 
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Flat / House No / Road / Locality</label>
+                      <input 
+                        type="text" 
+                        className="form-input" 
+                        placeholder="e.g. Flat 101, Green Heights, MG Road" 
+                        value={streetAddress}
+                        onChange={(e) => setStreetAddress(e.target.value)}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="form-label">City</label>
+                        <input 
+                          type="text" 
+                          className="form-input" 
+                          placeholder="e.g. Mumbai" 
+                          value={city}
+                          onChange={(e) => setCity(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Pincode (6 Digits)</label>
+                        <input 
+                          type="text" 
+                          pattern="[0-9]{6}"
+                          maxLength="6"
+                          className="form-input" 
+                          placeholder="e.g. 400001" 
+                          value={pincode}
+                          onChange={(e) => handlePincodeChange(e.target.value)}
+                          required
+                        />
+                        {pincodeLoading && (
+                          <span style={{ fontSize: '11px', color: 'var(--primary)', marginTop: '2px', display: 'block', animation: 'pulse 1.5s infinite' }}>
+                            Autodetecting city & state...
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">State</label>
+                      <select 
+                        className="form-select"
+                        value={indianState}
+                        onChange={(e) => setIndianState(e.target.value)}
+                        required
+                      >
+                        <option value="Andhra Pradesh">Andhra Pradesh</option>
+                        <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                        <option value="Assam">Assam</option>
+                        <option value="Bihar">Bihar</option>
+                        <option value="Chhattisgarh">Chhattisgarh</option>
+                        <option value="Goa">Goa</option>
+                        <option value="Gujarat">Gujarat</option>
+                        <option value="Haryana">Haryana</option>
+                        <option value="Himachal Pradesh">Himachal Pradesh</option>
+                        <option value="Jharkhand">Jharkhand</option>
+                        <option value="Karnataka">Karnataka</option>
+                        <option value="Kerala">Kerala</option>
+                        <option value="Madhya Pradesh">Madhya Pradesh</option>
+                        <option value="Maharashtra">Maharashtra</option>
+                        <option value="Manipur">Manipur</option>
+                        <option value="Meghalaya">Meghalaya</option>
+                        <option value="Mizoram">Mizoram</option>
+                        <option value="Nagaland">Nagaland</option>
+                        <option value="Odisha">Odisha</option>
+                        <option value="Punjab">Punjab</option>
+                        <option value="Rajasthan">Rajasthan</option>
+                        <option value="Sikkim">Sikkim</option>
+                        <option value="Tamil Nadu">Tamil Nadu</option>
+                        <option value="Telangana">Telangana</option>
+                        <option value="Tripura">Tripura</option>
+                        <option value="Uttar Pradesh">Uttar Pradesh</option>
+                        <option value="Uttarakhand">Uttarakhand</option>
+                        <option value="West Bengal">West Bengal</option>
+                        <option value="Delhi">Delhi (UT)</option>
+                        <option value="Jammu & Kashmir">Jammu & Kashmir (UT)</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">Payment Method</label>
+                      <select 
+                        className="form-select"
+                        value={paymentMethod}
+                        onChange={(e) => setPaymentMethod(e.target.value)}
+                        required
+                      >
+                        <option value="COD">COD (Cash on Delivery)</option>
+                        <option value="UPI">UPI (Google Pay / PhonePe / BHIM)</option>
+                      </select>
                     </div>
 
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border-color)', paddingTop: '16px', marginTop: '16px' }}>
