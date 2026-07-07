@@ -1,10 +1,11 @@
+const path = require('path');
 const bcrypt = require('bcryptjs');
 const dotenv = require('dotenv');
 const { connectDB } = require('./config/db');
 const dbManager = require('./config/dbManager');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables relative to this file
+dotenv.config({ path: path.join(__dirname, '.env') });
 
 const seedData = async () => {
   try {
@@ -32,14 +33,17 @@ const seedData = async () => {
     }
 
     // 1. Create seed users
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@chijandas.com';
+    const adminPass = process.env.ADMIN_PASSWORD || 'admin123';
+
     const salt = await bcrypt.genSalt(10);
-    const adminPassword = await bcrypt.hash('admin123', salt);
+    const adminPassword = await bcrypt.hash(adminPass, salt);
     const userPassword = await bcrypt.hash('user123', salt);
 
     console.log('Creating users...');
     const admin = await dbManager.users.create({
       username: 'Admin Chijandas',
-      email: 'admin@chijandas.com',
+      email: adminEmail.toLowerCase(),
       password: adminPassword,
       role: 'admin'
     });
@@ -52,7 +56,7 @@ const seedData = async () => {
     });
 
     console.log('Users created:');
-    console.log(`- Admin: admin@chijandas.com / admin123`);
+    console.log(`- Admin: ${adminEmail} / ${adminPass}`);
     console.log(`- User: user@chijandas.com / user123`);
 
     // 2. Create products

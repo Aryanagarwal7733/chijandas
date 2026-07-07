@@ -50,8 +50,8 @@ const Login = ({ onLoginSuccess }) => {
 
   const handleTestCredentials = (type) => {
     if (type === 'admin') {
-      setEmail('admin@chijandas.com');
-      setPassword('admin123');
+      setEmail('aryanagarwal610@gmail.com');
+      setPassword('7teSy0@1');
       setRole('admin');
     } else {
       setEmail('user@chijandas.com');
