@@ -12,7 +12,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'chijandas_super_secret_key_2026';
 // @access  Public
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password, role } = req.body;
+    const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
       return res.status(400).json({ message: 'Please enter all fields' });
@@ -33,7 +33,7 @@ router.post('/register', async (req, res) => {
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: role === 'admin' ? 'admin' : 'user'
+      role: 'user' // Hardcoded for security
     });
 
     // Create token

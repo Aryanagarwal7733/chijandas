@@ -3,7 +3,7 @@ import { ShoppingBag, Key, Mail, User, AlertCircle, Loader2 } from 'lucide-react
 
 const Login = ({ onLoginSuccess }) => {
   const [isRegister, setIsRegister] = useState(false);
-  const [role, setRole] = useState('admin'); // 'admin' or 'user'
+  const [role, setRole] = useState('user'); 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,23 +80,6 @@ const Login = ({ onLoginSuccess }) => {
         )}
 
         <form onSubmit={handleSubmit}>
-          {/* Tab Selector */}
-          {isRegister && (
-            <div className="role-tabs">
-              <div 
-                className={`role-tab ${role === 'admin' ? 'active' : ''}`}
-                onClick={() => setRole('admin')}
-              >
-                Admin Account
-              </div>
-              <div 
-                className={`role-tab ${role === 'user' ? 'active' : ''}`}
-                onClick={() => setRole('user')}
-              >
-                User Account
-              </div>
-            </div>
-          )}
 
           {isRegister && (
             <div className="form-group">
