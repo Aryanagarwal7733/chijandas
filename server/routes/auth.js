@@ -12,10 +12,15 @@ const JWT_SECRET = process.env.JWT_SECRET || 'chijandas_super_secret_key_2026';
 // @access  Public
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password } = req.body;
+    const { username, email, password, phoneNumber } = req.body;
 
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'Please enter all fields' });
+    if (!username || !email || !password || !phoneNumber) {
+      return res.status(400).json({ message: 'Please enter all fields, including phone number.' });
+    }
+
+    // Validate phone number length (10 digits)
+    if (phoneNumber.trim().length !== 10 || isNaN(phoneNumber.trim())) {
+      return res.status(400).json({ message: 'Please enter a valid 10-digit phone number.' });
     }
 
     // Check if user already exists
@@ -33,7 +38,9 @@ router.post('/register', async (req, res) => {
       username,
       email: email.toLowerCase(),
       password: hashedPassword,
-      role: 'user' // Hardcoded for security
+      role: 'user', // Hardcoded for security
+      phoneNumber: phoneNumber.trim(),
+      savedAddress: ''
     });
 
     // Create token
@@ -45,7 +52,9 @@ router.post('/register', async (req, res) => {
         id: newUser._id,
         username: newUser.username,
         email: newUser.email,
-        role: newUser.role
+        role: newUser.role,
+        phoneNumber: newUser.phoneNumber,
+        savedAddress: newUser.savedAddress || ''
       }
     });
   } catch (err) {
@@ -86,7 +95,9 @@ router.post('/login', async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
-        role: user.role
+        role: user.role,
+        phoneNumber: user.phoneNumber || '',
+        savedAddress: user.savedAddress || ''
       }
     });
   } catch (err) {

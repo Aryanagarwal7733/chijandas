@@ -70,7 +70,7 @@ const UserDashboard = ({ user, token, onLogout }) => {
     
     // Autofill structured address from localStorage, fallback to user.username for name
     setRecipientName(localStorage.getItem('chijandas_recipient_name') || user.username || '');
-    setPhoneNumber(localStorage.getItem('chijandas_phone_number') || '');
+    setPhoneNumber(localStorage.getItem('chijandas_phone_number') || user.phoneNumber || '');
     setStreetAddress(localStorage.getItem('chijandas_street_address') || '');
     setCity(localStorage.getItem('chijandas_city') || '');
     setIndianState(localStorage.getItem('chijandas_indian_state') || 'Maharashtra');

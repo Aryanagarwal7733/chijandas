@@ -45,14 +45,16 @@ const seedData = async () => {
       username: 'Admin Chijandas',
       email: adminEmail.toLowerCase(),
       password: adminPassword,
-      role: 'admin'
+      role: 'admin',
+      phoneNumber: '9999999999'
     });
 
     const user = await dbManager.users.create({
       username: 'Aryan Customer',
       email: 'user@chijandas.com',
       password: userPassword,
-      role: 'user'
+      role: 'user',
+      phoneNumber: '9876543210'
     });
 
     console.log('Users created:');

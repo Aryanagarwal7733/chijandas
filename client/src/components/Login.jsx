@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ShoppingBag, Key, Mail, User, AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react';
+import { ShoppingBag, Key, Mail, User, AlertCircle, Loader2, Eye, EyeOff, Phone } from 'lucide-react';
 
 const Login = ({ onLoginSuccess }) => {
   const [isRegister, setIsRegister] = useState(false);
   const [role, setRole] = useState('user'); 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -20,7 +21,7 @@ const Login = ({ onLoginSuccess }) => {
 
     const endpoint = isRegister ? `${API_URL}/auth/register` : `${API_URL}/auth/login`;
     const payload = isRegister 
-      ? { username, email, password, role } 
+      ? { username, email, password, phoneNumber } 
       : { email, password };
 
     try {
@@ -93,6 +94,26 @@ const Login = ({ onLoginSuccess }) => {
                   placeholder="Enter your name" 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
+                  required 
+                  style={{ paddingLeft: '44px', width: '100%' }}
+                />
+              </div>
+            </div>
+          )}
+
+          {isRegister && (
+            <div className="form-group">
+              <label className="form-label">Phone Number</label>
+              <div style={{ position: 'relative' }}>
+                <Phone size={16} className="search-icon" style={{ left: '16px' }} />
+                <input 
+                  type="tel" 
+                  pattern="[0-9]{10}"
+                  maxLength="10"
+                  className="form-input" 
+                  placeholder="Enter 10-digit phone number" 
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                   required 
                   style={{ paddingLeft: '44px', width: '100%' }}
                 />
