@@ -50,18 +50,7 @@ const Login = ({ onLoginSuccess }) => {
     }
   };
 
-  const handleTestCredentials = (type) => {
-    if (type === 'admin') {
-      setEmail('aryanagarwal610@gmail.com');
-      setPassword('7teSy0@1');
-      setRole('admin');
-    } else {
-      setEmail('user@chijandas.com');
-      setPassword('user123');
-      setRole('user');
-    }
-    setIsRegister(false);
-  };
+
 
   return (
     <div className="auth-page">
@@ -190,19 +179,7 @@ const Login = ({ onLoginSuccess }) => {
             </span>
           </p>
           
-          {!isRegister && (
-            <div style={{ marginTop: '24px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
-              <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>Test Accounts (Quick Login):</p>
-              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleTestCredentials('admin')}>
-                  Admin Demo
-                </button>
-                <button className="btn btn-secondary" style={{ padding: '6px 12px', fontSize: '12px' }} onClick={() => handleTestCredentials('user')}>
-                  User Demo
-                </button>
-              </div>
-            </div>
-          )}
+
         </div>
       </div>
     </div>
