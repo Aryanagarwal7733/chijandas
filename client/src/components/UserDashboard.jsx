@@ -86,7 +86,9 @@ const UserDashboard = ({ user, token, onLogout }) => {
   const triggerEmailJS = async (orderDetail) => {
     const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
     const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const adminTemplateId = import.meta.env.VITE_EMAILJS_ADMIN_TEMPLATE_ID;
     const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+    const adminEmail = import.meta.env.VITE_ADMIN_EMAIL || 'aryanagarwal610@gmail.com';
 
     if (!serviceId || !templateId || !publicKey) {
       console.log('\n============================================================');
@@ -106,7 +108,8 @@ const UserDashboard = ({ user, token, onLogout }) => {
     }
 
     try {
-      const templateParams = {
+      // 1. Send customer confirmation receipt
+      const customerParams = {
         to_email: user.email,
         customer_name: user.username,
         product_name: orderDetail.productName,
@@ -116,8 +119,24 @@ const UserDashboard = ({ user, token, onLogout }) => {
         payment_method: orderDetail.paymentMethod
       };
 
-      await emailjs.send(serviceId, templateId, templateParams, publicKey);
-      console.log('>>> [EmailJS] Order email sent successfully!');
+      await emailjs.send(serviceId, templateId, customerParams, publicKey);
+      console.log('>>> [EmailJS] Customer order receipt sent successfully!');
+
+      // 2. Send admin order notification alert (if admin template ID is configured)
+      if (adminTemplateId) {
+        const adminParams = {
+          to_email: adminEmail,
+          customer_name: user.username,
+          customer_email: user.email,
+          product_name: orderDetail.productName,
+          quantity: orderDetail.quantity,
+          total_price: `$${(orderDetail.quantity * orderDetail.price).toFixed(2)}`,
+          shipping_address: orderDetail.shippingAddress,
+          payment_method: orderDetail.paymentMethod
+        };
+        await emailjs.send(serviceId, adminTemplateId, adminParams, publicKey);
+        console.log('>>> [EmailJS] Admin alert notification sent successfully!');
+      }
     } catch (error) {
       console.error('>>> [EmailJS] Failed to send email:', error);
     }
