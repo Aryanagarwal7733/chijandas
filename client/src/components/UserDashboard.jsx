@@ -3,6 +3,7 @@ import {
   Search, Filter, ShoppingBag, Loader2, AlertCircle, 
   ShoppingCart, RefreshCw, LogOut, Check, ChevronRight, X
 } from 'lucide-react';
+import emailjs from '@emailjs/browser';
 
 const UserDashboard = ({ user, token, onLogout }) => {
   const [products, setProducts] = useState([]);
@@ -82,6 +83,46 @@ const UserDashboard = ({ user, token, onLogout }) => {
     setIsOrderModalOpen(true);
   };
 
+  const triggerEmailJS = async (orderDetail) => {
+    const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+    const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+    const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+
+    if (!serviceId || !templateId || !publicKey) {
+      console.log('\n============================================================');
+      console.log('>>> [MOCK EMAILJS] EmailJS credentials not set.');
+      console.log('>>> Set VITE_EMAILJS_SERVICE_ID, VITE_EMAILJS_TEMPLATE_ID, and VITE_EMAILJS_PUBLIC_KEY in Vercel settings to send real emails.');
+      console.log('>>> Template Parameters:', {
+        to_email: user.email,
+        customer_name: user.username,
+        product_name: orderDetail.productName,
+        quantity: orderDetail.quantity,
+        total_price: `$${(orderDetail.quantity * orderDetail.price).toFixed(2)}`,
+        shipping_address: orderDetail.shippingAddress,
+        payment_method: orderDetail.paymentMethod
+      });
+      console.log('============================================================\n');
+      return;
+    }
+
+    try {
+      const templateParams = {
+        to_email: user.email,
+        customer_name: user.username,
+        product_name: orderDetail.productName,
+        quantity: orderDetail.quantity,
+        total_price: `$${(orderDetail.quantity * orderDetail.price).toFixed(2)}`,
+        shipping_address: orderDetail.shippingAddress,
+        payment_method: orderDetail.paymentMethod
+      };
+
+      await emailjs.send(serviceId, templateId, templateParams, publicKey);
+      console.log('>>> [EmailJS] Order email sent successfully!');
+    } catch (error) {
+      console.error('>>> [EmailJS] Failed to send email:', error);
+    }
+  };
+
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     setOrderError('');
@@ -124,6 +165,15 @@ const UserDashboard = ({ user, token, onLogout }) => {
       }
 
       setOrderSuccess(true);
+
+      // Trigger EmailJS notification
+      triggerEmailJS({
+        productName: selectedProduct.name,
+        quantity: Number(orderQuantity),
+        price: selectedProduct.price,
+        shippingAddress: fullAddress,
+        paymentMethod
+      });
       
       // Save structured address fields locally for future autofills
       localStorage.setItem('chijandas_recipient_name', recipientName.trim());
