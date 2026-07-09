@@ -37,7 +37,7 @@ function App() {
     return (
       <div style={{ 
         minHeight: '100vh', 
-        backgroundColor: '#0b0f17', 
+        backgroundColor: 'transparent', 
         color: '#ffffff', 
         display: 'flex', 
         alignItems: 'center', 

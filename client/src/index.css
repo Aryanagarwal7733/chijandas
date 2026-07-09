@@ -54,7 +54,15 @@
 }
 
 body {
-  background-color: var(--bg-primary);
+  background-image: linear-gradient(
+      rgba(11, 15, 23, 0.88), 
+      rgba(19, 26, 38, 0.94)
+    ), 
+    url('/grocery_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: var(--font-body);
   font-size: 15px;
@@ -639,9 +647,7 @@ h1, h2, h3, h4, h5, h6 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.08) 0%, transparent 40%),
-              radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
-              var(--bg-primary);
+  background: transparent;
   padding: 24px;
 }
 
